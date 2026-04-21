@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Task Creator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .header-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #6264A7, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 110px;
+            transition: border-color 0.2s;
+            outline: none;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        textarea:focus { border-color: #6264A7; }
+        textarea::placeholder { color: #bbb; }
+
+        .examples {
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+
+        .examples-label {
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chip {
+            display: inline-block;
+            background: #f4f4fb;
+            border: 1px solid #e0e0f0;
+            border-radius: 20px;
+            padding: 4px 10px;
+            margin: 3px 3px 3px 0;
+            font-size: 12px;
+            color: #6264A7;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .chip:hover {
+            background: #e8e8f8;
+            border-color: #6264A7;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #6264A7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-family: inherit;
+            letter-spacing: 0.2px;
+        }
+
+        button:hover:not(:disabled) { background: #5254a0; }
+        button:active:not(:disabled) { transform: scale(0.99); }
+        button:disabled { background: #b0b0cc; cursor: not-allowed; }
+
+        .status {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status.loading {
+            display: flex;
+            background: #f0f0fa;
+            color: #6264A7;
+        }
+
+        .status.success {
+            display: flex;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            display: flex;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .spinner {
+            width: 15px;
+            height: 15px;
+            border: 2px solid #6264A7;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .hint {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 11px;
+            color: #bbb;
+            text-align: center;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <div class="header-icon">🤖</div>
+        <div>
+            <h1>AI Task Creator</h1>
+            <div class="subtitle">Describe your task — Claude creates it in ClickUp</div>
+        </div>
+    </div>
+
+    <label for="command">What needs to be done?</label>
+    <textarea
+        id="command"
+        placeholder="e.g. Review the Q2 report and prepare a summary by Friday, high priority, assign to Anna"
+    ></textarea>
+
+    <div class="examples">
+        <div class="examples-label">Quick examples</div>
+        <span class="chip" onclick="setExample(this)">Fix login bug by tomorrow</span>
+        <span class="chip" onclick="setExample(this)">Write proposal for new feature, due next week</span>
+        <span class="chip" onclick="setExample(this)">Call client about contract renewal, urgent</span>
+        <span class="chip" onclick="setExample(this)">Update documentation for API v2</span>
+    </div>
+
+    <button id="submitBtn" onclick="submitTask()">
+        ✨ &nbsp;Create Task in ClickUp
+    </button>
+
+    <div class="status loading" id="loading">
+        <div class="spinner"></div>
+        <span>Claude is analyzing your request...</span>
+    </div>
+
+    <div class="status success" id="success">
+        <span>✅</span>
+        <span id="successMsg">Task created in ClickUp!</span>
+    </div>
+
+    <div class="status error" id="error">
+        <span>❌</span>
+        <span id="errorMsg">Something went wrong. Please try again.</span>
+    </div>
+
+    <div class="hint">Press Ctrl+Enter (⌘+Enter on Mac) to submit</div>
+</div>
+
+<script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⚙️  PASTE YOUR MAKE.COM WEBHOOK URL BELOW
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const MAKE_WEBHOOK_URL = 'REPLACE_WITH_YOUR_MAKE_WEBHOOK_URL';
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    function setExample(el) {
+        document.getElementById('command').value = el.textContent.trim();
+        document.getElementById('command').focus();
+    }
+
+    async function submitTask() {
+        const command = document.getElementById('command').value.trim();
+        if (!command) {
+            document.getElementById('command').focus();
+            return;
+        }
+
+        if (MAKE_WEBHOOK_URL === 'REPLACE_WITH_YOUR_MAKE_WEBHOOK_URL') {
+            showStatus('error', 'Webhook URL not configured yet.');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        showStatus('loading');
+
+        try {
+            const response = await fetch(MAKE_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: command,
+                    timestamp: new Date().toISOString(),
+                    source: 'teams-tab'
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('command').value = '';
+                showStatus('success', 'Task created in ClickUp! 🎉');
+            } else {
+                showStatus('error', `Server error: ${response.status}. Try again.`);
+            }
+        } catch (e) {
+            showStatus('error', 'Could not reach Make.com. Check your connection.');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function showStatus(type, message) {
+        ['loading', 'success', 'error'].forEach(t => {
+            document.getElementById(t).style.display = 'none';
+        });
+        const el = document.getElementById(type);
+        if (message && type !== 'loading') {
+            document.getElementById(type === 'success' ? 'successMsg' : 'errorMsg').textContent = message;
+        }
+        el.style.display = 'flex';
+    }
+
+    document.getElementById('command').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitTask();
+    });
+</script>
+</body>
+</html>
